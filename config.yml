@@ -1,5 +1,6 @@
 # config.yml
 prs:
-  - https://github.com/microsoft/vscode/pull/206530
-  - https://github.com/duanyytop/agents-radar/pull/1
-  # 在这里继续添加你想追踪的任意公开 PR 链接
+  - https://github.com/vllm-project/vllm-metal/pull/121
+  - https://github.com/vllm-project/vllm-metal/pull/123
+  - https://github.com/waybarrios/vllm-mlx/pull/127
+  - https://github.com/waybarrios/vllm-mlx/pull/140"

@@ -1,0 +1,49 @@
+name: Daily PR Tracker
+
+on:
+  schedule:
+    # 每天北京时间早上 08:00 (UTC 00:00) 自动执行
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 允许在 Actions 页面手动点击运行进行测试
+
+permissions:
+  contents: write    # 允许推送归档文件到代码库
+  issues: write      # 允许使用 GitHub CLI 发布 Issue
+
+jobs:
+  track-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 拉取代码仓库
+        uses: actions/checkout@v4
+
+      - name: 🐍 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: ⚙️ 安装依赖包
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🔍 运行 PR 状态检查
+        id: tracker
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tracker.py
+
+      - name: 💾 将报告 Commit 到代码库的 digests 目录
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add digests/
+          git commit -m "docs: 自动生成 ${GITHUB_SHA::7} 的 PR 追踪报告" || echo "没有变更需要提交"
+          git push
+
+      - name: 📢 将报告发布为 GitHub Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "📡 每日 PR 状态报告 - ${{ steps.tracker.outputs.date }}" \
+            --body-file "${{ steps.tracker.outputs.report_path }}" || echo "Issue 发布失败"

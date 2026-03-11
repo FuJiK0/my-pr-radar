@@ -64,3 +64,12 @@ jobs:
           gh issue create \
             --title "📡 每日 PR 状态报告 - ${{ steps.tracker.outputs.date }}" \
             --body-file "${{ steps.tracker.outputs.report_path }}" || echo "Issue 发布失败"
+            
+      - name: 💾 将报告与最新配置 Commit 到代码库  
+        run: |
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            # 这里把 config.yml 加入到暂存区
+            git add digests/ config.yml
+            git commit -m "docs/chore: 自动生成 ${GITHUB_SHA::7} 追踪报告并清理失效 PR" || echo "没有变更需要提交"
+            git push

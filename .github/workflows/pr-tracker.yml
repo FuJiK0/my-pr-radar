@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write    # 允许推送归档文件到代码库
-  issues: write      # 允许使用 GitHub CLI 发布 Issue
+  issues: write      # 允许使用 GitHub CLI 发布、关闭和删除 Issue
 
 jobs:
   track-prs:
@@ -40,7 +40,24 @@ jobs:
           git commit -m "docs: 自动生成 ${GITHUB_SHA::7} 的 PR 追踪报告" || echo "没有变更需要提交"
           git push
 
-      - name: 📢 将报告发布为 GitHub Issue
+      - name: 🧹 处理旧的 PR 报告 Issue (关闭或删除)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 查找所有标题包含 "📡 每日 PR 状态报告" 且状态为 open 的 Issue 编号
+          OLD_ISSUES=$(gh issue list --state open --search "in:title 📡 每日 PR 状态报告" --json number -q '.[].number')
+          
+          for ISSUE in $OLD_ISSUES; do
+            echo "处理历史 Issue: #$ISSUE"
+            
+            # 【选项 1】将旧 Issue 关闭，并留言提示 (推荐做法)
+            gh issue close $ISSUE --comment "🤖 新的 PR 追踪日报已生成，此旧报告自动关闭。"
+            
+            # 【选项 2】如果你想彻底删除它，请注释掉上面那行，并把下面这行取消注释
+            # gh issue delete $ISSUE --yes
+          done
+
+      - name: 📢 将新报告发布为 GitHub Issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
